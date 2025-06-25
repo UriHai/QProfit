@@ -1,4 +1,5 @@
 import struct
+from binascii import hexlify
 
 
 class EthernetFrame:
@@ -16,8 +17,8 @@ class EthernetFrame:
 
     def print_frame(self) -> None:
         """Print the dst, src and data fields of a frame"""
-        print(f"dst: {self.dst}")
-        print(f"src: {self.src}")
+        print(f"dst: {hexlify(self.dst, ':')}")
+        print(f"src: {hexlify(self.src, ':')}")
         print(f"data: {self.data}")
 
     def is_destined_to(self, mac) -> bool:

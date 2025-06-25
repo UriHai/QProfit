@@ -1,8 +1,9 @@
 from ethernet import EthernetFrame
-from scapy.all import conf, IFACES
+from scapy.all import conf, get_if_hwaddr
+from binascii import unhexlify
 
 IFACE = "Intel(R) Wi-Fi 6 AX200 160MHz"
-IFACE_MAC = b'\x84\xd8\x1b\xb4\x91\x9c'
+IFACE_MAC = unhexlify(get_if_hwaddr(IFACE).replace(':', ''))
 
 sock = conf.L2socket(iface=IFACE, promisc=True)  # Create the socket
 while True:
