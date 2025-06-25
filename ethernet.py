@@ -26,9 +26,10 @@ class EthernetFrame:
 
     def print_frame(self) -> None:
         """Print the dst, src and data fields of a frame"""
-        print(f"dst: {hexlify(self.dst, ':')}")
-        print(f"src: {hexlify(self.src, ':')}")
-        print(f"data: {self.data}")
+        print("Ethernet")
+        print(f"dst: {str(hexlify(self.dst, ':'))[2:-1]}")
+        print(f"src: {str(hexlify(self.src, ':'))[2:-1]}")
+        print(f"data: {self.data}\n")
 
     def is_destined_to(self, mac) -> bool:
         """
@@ -36,4 +37,4 @@ class EthernetFrame:
         :param mac: The mac address to check
         :return: True if the frames was addressed to this mac, False otherwise
         """
-        return self.dst == mac or self.dst == self.BROADCAST
+        return (self.dst == mac or self.dst == self.BROADCAST) and self.src != mac

@@ -3,6 +3,7 @@ import struct
 from binascii import unhexlify, hexlify
 
 FORMAT = ">HHbbH6s4s6s4s"
+FRAME_SIZE = struct.calcsize(FORMAT)
 HARDWARE_TYPE = 1
 PROTOCOL_TYPE = 0x800
 HARDWARE_SIZE = 6
@@ -12,6 +13,29 @@ REPLY = 2
 BROADCAST_BYTES = b'\xff\xff\xff\xff\xff\xff'
 BROADCAST_STRING = "ff:ff:ff:ff:ff:ff"
 ARP_ETHER_TYPE = 0x806
+
+
+class ARP_Frame:
+    """
+    Initialize ARP Frame
+    :param buffer: buffer containing raw bytes of the ARP frame
+    """
+
+    def __init__(self, buffer) -> None:
+        buffer = buffer[:FRAME_SIZE]
+        self.hardware_type, self.protocol_type, self.hardware_length, self.protocol_lentgh, self.operatrion, \
+        self.src_mac, self.src_ip, self.dst_mac, self.dst_ip = struct.unpack(FORMAT, buffer)
+
+    def print_frame(self) -> None:
+        """Print the dst, src and data fields of a frame"""
+        if self.operatrion == REQUEST:
+            print("ARP Request")
+        else:
+            print("ARP Reply")
+        print(f"src mac: {str(hexlify(self.src_mac, ':'))[2:-1]}")
+        print(f"src ip: {'.'.join([str(byte) for byte in self.src_ip])}")
+        print(f"dst mac: {str(hexlify(self.dst_mac, ':'))[2:-1]}")
+        print(f"dst ip: {'.'.join([str(byte) for byte in self.dst_ip])}\n")
 
 
 def arp_request(src_mac: str, src_ip: str, dst_ip: str) -> bytes:
