@@ -3,7 +3,7 @@ import struct
 
 class EthernetFrame:
     FORMAT = f"<6s6sH"
-    HEADERS_SIZE = 14
+    HEADERS_SIZE = struct.calcsize(FORMAT)
     BROADCAST = b'\xff\xff\xff\xff\xff\xff'
 
     def __init__(self, buffer) -> None:
