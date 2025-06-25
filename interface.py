@@ -23,3 +23,10 @@ class Interface:
         """
         ethernet_frame = build_ethernet_frame(dst_mac, self.mac, protocol_type, data)
         self.sock.send(ethernet_frame)
+
+    def send_arp_request(self, dst_ip) -> None:
+        """
+        Send an ARP request
+        :param dst_ip: The target IP address
+        """
+        arp_frame = build_arp_frame()
