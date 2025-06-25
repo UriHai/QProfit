@@ -1,9 +1,18 @@
 import struct
-from binascii import hexlify
+from binascii import hexlify, unhexlify
+
+FORMAT = ">6s6sH"
+
+
+def ethernet_frame(dst: str, src: str, prot_type: int, data: bytes) -> bytes:
+    dst = unhexlify(dst.replace(':', ''))
+    src = unhexlify(src.replace(':', ''))
+    headers = struct.pack(FORMAT, dst, src, prot_type)
+    frame = headers + data
+    return frame
 
 
 class EthernetFrame:
-    FORMAT = f"<6s6sH"
     HEADERS_SIZE = struct.calcsize(FORMAT)
     BROADCAST = b'\xff\xff\xff\xff\xff\xff'
 
@@ -13,7 +22,7 @@ class EthernetFrame:
         :param buffer: buffer containing raw bytes of the ethernet frame
         """
         headers, self.data = buffer[:self.HEADERS_SIZE], buffer[self.HEADERS_SIZE:]
-        self.dst, self.src, self.type = struct.unpack(self.FORMAT, headers)
+        self.dst, self.src, self.type = struct.unpack(FORMAT, headers)
 
     def print_frame(self) -> None:
         """Print the dst, src and data fields of a frame"""
