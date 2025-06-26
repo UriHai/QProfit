@@ -1,7 +1,10 @@
 from binascii import hexlify, unhexlify
 
 BROADCAST_MAC_ADDRESS: str = "ff:ff:ff:ff:ff:ff"
+
 ARP_ETHER_TYPE: int = 0x806
+ARP_OPERATION_REQUEST: int = 1
+ARP_OPERATION_REPLY: int = 2
 
 
 def convert_mac_string_to_bytes(mac: str) -> bytes:

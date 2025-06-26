@@ -1,6 +1,8 @@
-from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE
-from new_ethernet import build_ethernet_frame
-from new_arp import build_arp_request_frame, build_arp_reply_frame
+from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE, ARP_OPERATION_REQUEST, ARP_OPERATION_REPLY
+from new_ethernet import build_ethernet_frame, EthernetFrame
+from new_arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
+
+from typing import Dict
 from scapy.all import conf, get_if_hwaddr, get_if_addr
 
 
@@ -13,21 +15,28 @@ class Interface:
         self.mac: str = get_if_hwaddr(name)
         self.ip: str = get_if_addr(name)
         self.sock = conf.L2socket(iface=name, promisc=True)
-        self.arp_cache = {}
+        self.arp_cache: Dict[str, str] = {}
         self.routing_table = {}
 
     def handle_incoming_frames(self) -> None:
-        """Show and handle all incoming frames"""
+        """Show and handle incoming frames"""
         while True:
             recv = self.sock.recv_raw()
             if recv[1]:
                 ethernet_frame = EthernetFrame(recv[1])
-                if ethernet_frame.type == ARP_ETHER_TYPE and ethernet_frame.is_destined_to(
-                        unhexlify(IFACE_MAC.replace(':', ''))):
-                    ethernet_frame.print_frame()
-                    arp_frame = ARP_Frame(ethernet_frame.data)
-                    arp_frame.print_frame()
-                    arp_cache[arp_frame.src_ip] = arp_frame.src_mac
+                if self.should_handle(ethernet_frame):
+                    ethernet_frame.print_frame_headers()
+                    if ethernet_frame.ethernet_type == ARP_ETHER_TYPE:
+                        self.handle_arp_frame(ethernet_frame)
+
+    def should_handle(self, ethernet_frame: EthernetFrame) -> bool:
+        """
+        Determine whether the Ethernet frame is addressed to this interface
+        :param ethernet_frame: The Ethernet frame
+        :return: True if the frames was addressed to this interface, False otherwise
+        """
+        return (
+                           self.mac == ethernet_frame.dst or BROADCAST_MAC_ADDRESS == ethernet_frame.dst) and self.mac != ethernet_frame.src
 
     def send_ethernet(self, dst_mac: str, protocol_type: int, data: bytes) -> None:
         """
@@ -55,3 +64,14 @@ class Interface:
         """
         arp_frame: bytes = build_arp_reply_frame(self.mac, self.ip, dst_mac, dst_ip)
         self.send_ethernet(dst_mac, ARP_ETHER_TYPE, arp_frame)
+
+    def handle_arp_frame(self, ethernet_frame: EthernetFrame) -> None:
+        """
+        Handle arp frames
+        :param ethernet_frame: The Ethernet frame encapsulating the ARP frame
+        """
+        arp_frame = ARPFrame(ethernet_frame.data)
+        arp_frame.print_arp_frame()
+        self.arp_cache[arp_frame.src_ip] = arp_frame.src_mac
+        if arp_frame.operation == ARP_OPERATION_REQUEST:
+            self.send_arp_reply(arp_frame.src_mac, arp_frame.src_ip)

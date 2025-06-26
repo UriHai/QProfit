@@ -1,10 +1,12 @@
-from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE, convert_mac_string_to_bytes
-from struct import pack, unpack, calcsize
+from utils import ARP_ETHER_TYPE, convert_mac_bytes_to_string, convert_mac_string_to_bytes
+
 from typing import Dict
+from struct import pack, unpack, calcsize
 
 ETHERNET_HEADERS_FORMAT: str = ">6s6sH"
 ETHERNET_HEADERS_LENGTH: int = calcsize(ETHERNET_HEADERS_FORMAT)
-ETHERNET_TYPES: Dict[int, str] = {}
+ETHERNET_TYPES: Dict[int, str] = {ARP_ETHER_TYPE: "ARP"}
+
 
 def build_ethernet_frame(dst: str, src: str, protocol_type: int, data: bytes) -> bytes:
     """
@@ -17,7 +19,7 @@ def build_ethernet_frame(dst: str, src: str, protocol_type: int, data: bytes) ->
     """
     dst_bytes: bytes = convert_mac_string_to_bytes(dst)
     src_bytes: bytes = convert_mac_string_to_bytes(src)
-    headers = pack(ETHERNET_FORMAT, dst_bytes, src_bytes, protocol_type)
+    headers = pack(ETHERNET_HEADERS_FORMAT, dst_bytes, src_bytes, protocol_type)
     ethernet_frame = headers + data
     return ethernet_frame
 
@@ -29,19 +31,16 @@ class EthernetFrame:
         :param buffer: Buffer containing raw bytes of the Ethernet frame
         """
         headers, self.data = buffer[:ETHERNET_HEADERS_LENGTH], buffer[ETHERNET_HEADERS_LENGTH:]
-        dst, src, self.type = unpack(ETHERNET_HEADERS_FORMAT, headers)
+        dst, src, self.ethernet_type = unpack(ETHERNET_HEADERS_FORMAT, headers)
+        self.dst: str = convert_mac_bytes_to_string(dst)
+        self.src: str = convert_mac_bytes_to_string(src)
 
-    def print_frame(self) -> None:
+    def print_frame_headers(self) -> None:
         """Print the dst, src and data fields of a frame"""
         print("Ethernet")
-        print(f"dst: {str(hexlify(self.dst, ':'))[2:-1]}")
-        print(f"src: {str(hexlify(self.src, ':'))[2:-1]}")
-        print(f"data: {self.data}\n")
-
-    def is_destined_to(self, mac) -> bool:
-        """
-        Check if a frame is designated to a mac address
-        :param mac: The mac address to check
-        :return: True if the frames was addressed to this mac, False otherwise
-        """
-        return (self.dst == mac or self.dst == self.BROADCAST) and self.src != mac
+        if self.ethernet_type in ETHERNET_TYPES:
+            print(f"Type: {ETHERNET_TYPES[self.ethernet_type]}")
+        else:
+            print(f"Type: {hex(self.ethernet_type)}")
+        print(f"dst: {self.dst}")
+        print(f"src: {self.src}\n")
