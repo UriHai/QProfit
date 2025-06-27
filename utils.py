@@ -6,6 +6,8 @@ ARP_ETHER_TYPE: int = 0x806
 ARP_OPERATION_REQUEST: int = 1
 ARP_OPERATION_REPLY: int = 2
 
+IPv4_ETHER_TYPE: int = 0x800
+
 
 def convert_mac_string_to_bytes(mac: str) -> bytes:
     """
