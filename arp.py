@@ -1,5 +1,5 @@
 from utils import convert_mac_string_to_bytes, convert_ip_string_to_bytes, convert_mac_bytes_to_string, \
-    convert_ip_bytes_to_string, ARP_OPERATION_REPLY, ARP_OPERATION_REQUEST
+    convert_ip_bytes_to_string, BROADCAST_MAC_ADDRESS, ARP_OPERATION_REPLY, ARP_OPERATION_REQUEST
 
 from struct import pack, unpack, calcsize
 
@@ -9,7 +9,6 @@ HARDWARE_TYPE: int = 1
 PROTOCOL_TYPE: int = 0x800
 HARDWARE_SIZE: int = 6
 PROTOCOL_SIZE: int = 4
-BROADCAST_MAC_ADDRESS: str = "ff:ff:ff:ff:ff:ff"
 
 
 def build_arp_frame(operation: int, src_mac: str, src_ip: str, dst_mac: str, dst_ip: str) -> bytes:
