@@ -5,6 +5,19 @@ from arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
 from typing import Dict
 from scapy.all import conf, get_if_hwaddr, get_if_addr
 
+"""
+Information about this module by layer
+--------------------------------------
+
+Link layer:
+Supported protocols: Ethernet, ARP
+MAC address format: "xx:xx:xx:xx:xx:xx"
+
+Network layer:
+Supported protocols: IPv4, ICMP
+IPv4 address format: "0.0.0.0"
+"""
+
 
 class Interface:
     def __init__(self, name: str) -> None:
@@ -36,7 +49,7 @@ class Interface:
         :return: True if the frames was addressed to this interface, False otherwise
         """
         return (
-                           self.mac == ethernet_frame.dst or BROADCAST_MAC_ADDRESS == ethernet_frame.dst) and self.mac != ethernet_frame.src
+                       self.mac == ethernet_frame.dst or BROADCAST_MAC_ADDRESS == ethernet_frame.dst) and self.mac != ethernet_frame.src
 
     def send_ethernet(self, dst_mac: str, protocol_type: int, data: bytes) -> None:
         """
