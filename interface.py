@@ -1,6 +1,6 @@
 from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE, ARP_OPERATION_REQUEST, ARP_OPERATION_REPLY
-from new_ethernet import build_ethernet_frame, EthernetFrame
-from new_arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
+from ethernet import build_ethernet_frame, EthernetFrame
+from arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
 
 from typing import Dict
 from scapy.all import conf, get_if_hwaddr, get_if_addr
