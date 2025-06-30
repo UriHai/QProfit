@@ -1,4 +1,5 @@
-from binascii import hexlify, unhexlify
+from typing import Tuple
+from binascii import hexlify
 
 BROADCAST_MAC_ADDRESS: str = "ff:ff:ff:ff:ff:ff"
 
@@ -43,3 +44,28 @@ def convert_ip_bytes_to_string(ip: bytes) -> str:
     :return: String representation of the IP address
     """
     return '.'.join([str(byte) for byte in ip])
+
+
+def convert_ip_string_to_binary(ip: str) -> str:
+    """
+    Convert IP string to a binary string representation
+    :param ip: String representation of the IP address
+    :return: Binary string representation of the IP address
+    """
+    return ''.join([bin(int(byte))[2:].zfill(8) for byte in ip.split('.')])
+
+
+def belongs_to_subnet(subnet: Tuple[str, int], ip: str) -> bool:
+    """
+    Check if an IPv4 address belongs to a subnet
+    :param subnet: The subnet - (address, musk)
+    :param ip: The IP address
+    :return: True if the IP is part of the subnet, false otherwise
+    """
+    subnet_address, subnet_musk = subnet
+    ip_binary: str = convert_ip_string_to_binary(ip)
+    subnet_binary: str = convert_ip_string_to_binary(subnet_address)
+    for i in range(subnet_musk):
+        if ip[ip_binary[i] != subnet_binary[i]]:
+            return False
+    return True
