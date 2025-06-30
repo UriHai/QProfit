@@ -5,8 +5,10 @@ from arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
 from ip import build_ip_packet, IPPacket
 from icmp import build_ping_packet, build_pong_packet, ICMPPacket, PingPacket
 
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, List
 from scapy.all import conf, get_if_hwaddr, get_if_addr
+
+ARP_CACHE_PATH = 'arp_cache'
 
 """
 Information about this module by layer
@@ -21,8 +23,6 @@ Supported protocols: IPv4, ICMP
 IPv4 address format: "0.0.0.0"
 """
 
-LAP = "28:39:26:BA:12:B1"
-
 
 class Interface:
     def __init__(self, name: str) -> None:
@@ -33,12 +33,26 @@ class Interface:
         self.mac: str = get_if_hwaddr(name)
         self.ip: str = get_if_addr(name)
         self.sock = conf.L2socket(iface=name, promisc=True)
-        self.arp_cache: Dict[str, str] = {}
+        self.arp_cache: Dict[str, str] = self.load_arp_cache()
         self.routing_table: Dict[Tuple[str, int], Union[str, None]] = {
             ("192.168.68.0", 24): None,
             ("0.0.0.0", 0): "192.168.68.1"
         }
         self.sequence_number: int = 0
+
+    @staticmethod
+    def load_arp_cache() -> Dict[str, str]:
+        """
+        Load ARP cache from file
+
+        :return: Dictionary representing the ARP cache
+        """
+        arp_cache: Dict[str, str] = {}
+        with open(ARP_CACHE_PATH) as arp_cache_file:
+            for line in arp_cache_file:
+                record: List[str, str] = line.split(' ')
+                arp_cache[record[0]] = record[1]
+        return arp_cache
 
     def handle_incoming_frames(self) -> None:
         """Show and handle incoming frames"""
@@ -96,9 +110,28 @@ class Interface:
         """
         arp_frame = ARPFrame(ethernet_frame.data)
         arp_frame.print_arp_frame()
-        self.arp_cache[arp_frame.src_ip] = arp_frame.src_mac
+        self.update_arp_cache(arp_frame.src_ip, arp_frame.src_mac)
         if arp_frame.operation == ARP_OPERATION_REQUEST:
             self.send_arp_reply(arp_frame.src_mac, arp_frame.src_ip)
+
+    def update_arp_cache(self, ip: str, mac: str) -> None:
+        """
+        Update the ARP cache - both the class field and the static file
+        :param ip: The IP address to add or update
+        :param mac: The new MAC address for the IP address
+        """
+        self.arp_cache[ip] = mac
+        with open(ARP_CACHE_PATH, 'r') as arp_cache_file:
+            data: List[str] = arp_cache_file.readlines()
+        for i, line in enumerate(data):
+            if ip in line:
+                data[i] = f"{ip} {mac}\n"
+                with open(ARP_CACHE_PATH, 'w') as arp_cache_file:
+                    arp_cache_file.writelines(data)
+                return
+
+        with open(ARP_CACHE_PATH, 'a') as arp_cache_file:
+            arp_cache_file.write(f"{ip} {mac}\n")
 
     # Network layer
     def send_ip_packet(self, ip_protocol: int, dst_ip: str, data: bytes) -> None:
@@ -126,15 +159,6 @@ class Interface:
         for subnet, gateway in self.routing_table.items():
             if belongs_to_subnet(subnet, dst_ip):
                 return gateway
-
-    def ping(self, dst_ip: str) -> None:
-        """
-        Send ICMP echo request
-        :param dst_ip: The target IP address
-        """
-        ping_packet: bytes = build_ping_packet(self.sequence_number)
-        self.sequence_number += 1
-        self.send_ip_packet(IP_ICMP_TYPE, dst_ip, ping_packet)
 
     def ping(self, dst_ip: str) -> None:
         """
