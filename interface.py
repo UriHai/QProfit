@@ -9,6 +9,8 @@ from typing import Dict, Tuple, Union, List
 from scapy.all import conf, get_if_hwaddr, get_if_addr
 
 ARP_CACHE_PATH = 'arp_cache'
+ROUTING_TABLE_PATH = 'routing_table'
+ON_LINK_STRING = 'On-link'
 
 """
 Information about this module by layer
@@ -34,10 +36,7 @@ class Interface:
         self.ip: str = get_if_addr(name)
         self.sock = conf.L2socket(iface=name, promisc=True)
         self.arp_cache: Dict[str, str] = self.load_arp_cache()
-        self.routing_table: Dict[Tuple[str, int], Union[str, None]] = {
-            ("192.168.68.0", 24): None,
-            ("0.0.0.0", 0): "192.168.68.1"
-        }
+        self.routing_table: Dict[Tuple[str, int], Union[str, None]] = self.load_routing_table()
         self.sequence_number: int = 0
 
     @staticmethod
@@ -50,9 +49,26 @@ class Interface:
         arp_cache: Dict[str, str] = {}
         with open(ARP_CACHE_PATH) as arp_cache_file:
             for line in arp_cache_file:
-                record: List[str, str] = line.split(' ')
-                arp_cache[record[0]] = record[1]
+                ip, mac = line.replace('\n', '').split(' ')
+                arp_cache[ip] = mac
         return arp_cache
+
+    @staticmethod
+    def load_routing_table() -> Dict[Tuple[str, int], Union[str, None]]:
+        """
+        Load routing table from file
+
+        :return: Dictionary representing the routing table
+        """
+        routing_table: Dict[Tuple[str, int], Union[str, None]] = {}
+        with open(ROUTING_TABLE_PATH) as routing_table_file:
+            for line in routing_table_file:
+                subnet_address, netmask, gateway = line.replace('\n', '').split(' ')
+                subnet: Tuple[str, int] = subnet_address, int(netmask)
+                if gateway == ON_LINK_STRING:
+                    gateway = None
+                routing_table[subnet] = gateway
+        return routing_table
 
     def handle_incoming_frames(self) -> None:
         """Show and handle incoming frames"""
