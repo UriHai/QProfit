@@ -25,7 +25,7 @@ def build_ethernet_frame(dst: str, src: str, protocol_type: int, data: bytes) ->
 
 
 class EthernetFrame:
-    def __init__(self, buffer) -> None:
+    def __init__(self, buffer: bytes) -> None:
         """
         Initialize Ethernet Frame
         :param buffer: Buffer containing raw bytes of the Ethernet frame

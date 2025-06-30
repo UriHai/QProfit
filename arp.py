@@ -54,7 +54,7 @@ def build_arp_reply_frame(src_mac: str, src_ip: str, dst_mac: str, dst_ip: str) 
 
 
 class ARPFrame:
-    def __init__(self, buffer) -> None:
+    def __init__(self, buffer: bytes) -> None:
         """
         Initialize ARP Frame
         :param buffer: buffer containing raw bytes of the ARP frame
@@ -75,10 +75,3 @@ class ARPFrame:
         else:
             print("ARP Reply")
             print(f"{self.src_ip} is at {self.src_mac}\n")
-        """
-        print(f"src mac: {self.src_mac}")
-        print(f"src ip: {self.src_ip}")
-        print(f"dst mac: {self.dst_mac}")
-        print(f"dst ip: {self.dst_ip}\n")
-
-        """
