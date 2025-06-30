@@ -1,4 +1,4 @@
-from utils import convert_ip_string_to_bytes
+from utils import convert_ip_string_to_bytes, convert_ip_bytes_to_string
 
 from struct import pack, unpack, calcsize
 
@@ -35,6 +35,8 @@ class IPPacket:
         :param buffer: buffer containing raw bytes of the ARP frame
         """
         headers: bytes = buffer[:IP_HEADERS_LENGTH]
-        self.version_and_ihl, self.ip_dsf, self.total_length, self.identification, self.flags_and_offset, self.ttl, self.protocol, self.header_checksum, self.src_ip, self.dst_ip = unpack(
+        self.version_and_ihl, self.ip_dsf, self.total_length, self.identification, self.flags_and_offset, self.ttl, self.protocol, self.header_checksum, src_ip, dst_ip = unpack(
             IP_HEADERS_FORMAT, headers)
+        self.src_ip = convert_ip_bytes_to_string(src_ip)
+        self.dst_ip = convert_ip_bytes_to_string(dst_ip)
         self.data = buffer[IP_HEADERS_LENGTH:]

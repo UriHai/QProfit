@@ -214,11 +214,11 @@ class Interface:
         """
         return self.ip == ip_packet.dst_ip and self.ip != ip_packet.src_ip
 
-    def handle_icmp_packet(self, ip_packet) -> None:
+    def handle_icmp_packet(self, ip_packet: IPPacket) -> None:
         """
         Handle ICMP packet
         :param ip_packet: The IP packet encapsulating the ICMP packet
         """
-        icmp_packet: ICMPPacket = ip_packet.data
-        if icmp_packet.type == ICMP_PING_TYPE:
-            self.pong(ip_packet.src, icmp_packet)
+        icmp_packet: ICMPPacket = ICMPPacket(ip_packet.data)
+        if icmp_packet.icmp_type == ICMP_PING_TYPE:
+            self.pong(ip_packet.src_ip, icmp_packet)

@@ -31,7 +31,7 @@ def build_ping_packet(sequence_number: int) -> bytes:
     :return: Bytes representation of the ping packet
     """
     headers: bytes = pack(PING_FORMAT, PING_IDENTIFIER, sequence_number)
-    return build_icmp_packet(ICMP_PONG_TYPE, headers, PING_DATA)
+    return build_icmp_packet(ICMP_PING_TYPE, headers, PING_DATA)
 
 
 def build_pong_packet(identifier: int, sequence_number: int) -> bytes:
@@ -42,7 +42,7 @@ def build_pong_packet(identifier: int, sequence_number: int) -> bytes:
     :return: Bytes representation of the pong packet
     """
     headers: bytes = pack(PING_FORMAT, identifier, sequence_number)
-    return build_icmp_packet(ICMP_PING_TYPE, headers, PING_DATA)
+    return build_icmp_packet(ICMP_PONG_TYPE, headers, PING_DATA)
 
 
 class ICMPPacket:
@@ -52,7 +52,7 @@ class ICMPPacket:
         :param buffer: buffer containing raw bytes of the ICMP packet
         """
         headers: bytes = buffer[:ICMP_HEADERS_LENGTH]
-        self.type, self.code, self.checksum, self.rest = unpack(ICMP_HEADERS_FORMAT, headers)
+        self.icmp_type, self.code, self.checksum, self.rest = unpack(ICMP_HEADERS_FORMAT, headers)
         self.data: bytes = buffer[ICMP_HEADERS_LENGTH:]
 
 
