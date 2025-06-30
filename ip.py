@@ -1,6 +1,6 @@
 from utils import convert_ip_string_to_bytes
 
-from struct import pack, unpack, calcsize
+from struct import pack, calcsize
 
 IP_HEADERS_FORMAT: str = ">BBHHHBBH4s4s"
 IP_HEADERS_LENGTH: int = calcsize(IP_HEADERS_FORMAT)

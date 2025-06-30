@@ -9,6 +9,9 @@ ARP_OPERATION_REPLY: int = 2
 
 IPv4_ETHER_TYPE: int = 0x800
 
+IP_ICMP_TYPE: int = 1
+ICMP_PING_TYPE: int = 8
+
 
 def convert_mac_string_to_bytes(mac: str) -> bytes:
     """
@@ -65,7 +68,4 @@ def belongs_to_subnet(subnet: Tuple[str, int], ip: str) -> bool:
     subnet_address, subnet_musk = subnet
     ip_binary: str = convert_ip_string_to_binary(ip)
     subnet_binary: str = convert_ip_string_to_binary(subnet_address)
-    for i in range(subnet_musk):
-        if ip[ip_binary[i] != subnet_binary[i]]:
-            return False
-    return True
+    return ip_binary[:subnet_musk] == subnet_binary[:subnet_musk]

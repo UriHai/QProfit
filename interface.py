@@ -1,8 +1,9 @@
-from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE, ARP_OPERATION_REQUEST, IPv4_ETHER_TYPE, \
-    convert_ip_string_to_binary, belongs_to_subnet
+from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE, ARP_OPERATION_REQUEST, IPv4_ETHER_TYPE, IP_ICMP_TYPE, \
+    belongs_to_subnet
 from ethernet import build_ethernet_frame, EthernetFrame
 from arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
 from ip import build_ip_packet
+from icmp import build_ping_packet
 
 from typing import Dict, Tuple, Union
 from scapy.all import conf, get_if_hwaddr, get_if_addr
@@ -37,13 +38,7 @@ class Interface:
             ("192.168.68.0", 24): None,
             ("0.0.0.0", 0): "192.168.68.1"
         }
-
-        # Display filters
-        # self.src_mac: List[str] = []
-        # self.dst_mac: List[str] = []
-        # self.ether_type: List[int] = []
-        #
-        # self.src_ip: List
+        self.sequence_number: int = 0
 
     def handle_incoming_frames(self) -> None:
         """Show and handle incoming frames"""
@@ -128,9 +123,18 @@ class Interface:
     def get_gateway(self, dst_ip: str) -> Union[str, None]:
         """
         Find the gateway for an IPv4 packet
-        :param dst_ip: The target address
+        :param dst_ip: The target IP address
         :return: None if the target is On-link or the IPv4 address of the gateway
         """
         for subnet, gateway in self.routing_table.items():
             if belongs_to_subnet(subnet, dst_ip):
                 return gateway
+
+    def ping(self, dst_ip: str) -> None:
+        """
+        Send ICMP echo request
+        :param dst_ip: The target IP address
+        """
+        ping_packet: bytes = build_ping_packet(self.sequence_number)
+        self.sequence_number += 1
+        self.send_ip_packet(IP_ICMP_TYPE, dst_ip, ping_packet)
