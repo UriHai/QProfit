@@ -11,6 +11,7 @@ IPv4_ETHER_TYPE: int = 0x800
 
 IP_ICMP_TYPE: int = 1
 ICMP_PING_TYPE: int = 8
+ICMP_PONG_TYPE: int = 0
 
 
 def convert_mac_string_to_bytes(mac: str) -> bytes:
@@ -61,11 +62,11 @@ def convert_ip_string_to_binary(ip: str) -> str:
 def belongs_to_subnet(subnet: Tuple[str, int], ip: str) -> bool:
     """
     Check if an IPv4 address belongs to a subnet
-    :param subnet: The subnet - (address, musk)
+    :param subnet: The subnet - (address, mask)
     :param ip: The IP address
     :return: True if the IP is part of the subnet, false otherwise
     """
-    subnet_address, subnet_musk = subnet
+    subnet_address, subnet_mask = subnet
     ip_binary: str = convert_ip_string_to_binary(ip)
     subnet_binary: str = convert_ip_string_to_binary(subnet_address)
-    return ip_binary[:subnet_musk] == subnet_binary[:subnet_musk]
+    return ip_binary[:subnet_mask] == subnet_binary[:subnet_mask]

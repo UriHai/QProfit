@@ -1,8 +1,9 @@
-from utils import ICMP_PING_TYPE
+from utils import ICMP_PING_TYPE, ICMP_PONG_TYPE
 
-from struct import pack
+from struct import pack, unpack, calcsize
 
 ICMP_HEADERS_FORMAT: str = "<BBH4s"
+ICMP_HEADERS_LENGTH: int = calcsize(ICMP_HEADERS_FORMAT)
 ICMP_CODE: int = 0
 ICMP_CHECKSUM: int = 0
 
@@ -30,4 +31,35 @@ def build_ping_packet(sequence_number: int) -> bytes:
     :return: Bytes representation of the ping packet
     """
     headers: bytes = pack(PING_FORMAT, PING_IDENTIFIER, sequence_number)
+    return build_icmp_packet(ICMP_PONG_TYPE, headers, PING_DATA)
+
+
+def build_pong_packet(identifier: int, sequence_number: int) -> bytes:
+    """
+    Build an ICMP Echo Reply packet
+    :param identifier: Ping identifier
+    :param sequence_number: Ping sequence number
+    :return: Bytes representation of the pong packet
+    """
+    headers: bytes = pack(PING_FORMAT, identifier, sequence_number)
     return build_icmp_packet(ICMP_PING_TYPE, headers, PING_DATA)
+
+
+class ICMPPacket:
+    def __init__(self, buffer: bytes) -> None:
+        """
+        Initialize ICMP packet
+        :param buffer: buffer containing raw bytes of the ICMP packet
+        """
+        headers: bytes = buffer[:ICMP_HEADERS_LENGTH]
+        self.type, self.code, self.checksum, self.rest = unpack(ICMP_HEADERS_FORMAT, headers)
+        self.data: bytes = buffer[ICMP_HEADERS_LENGTH:]
+
+
+class PingPacket:
+    def __init__(self, buffer: bytes) -> None:
+        """
+        Initialize ICMP Echo Request packet
+        :param buffer: buffer containing raw bytes of the ICMP packet
+        """
+        self.identifier, self.sequence_number = unpack(PING_FORMAT, buffer)

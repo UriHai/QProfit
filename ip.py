@@ -1,6 +1,6 @@
 from utils import convert_ip_string_to_bytes
 
-from struct import pack, calcsize
+from struct import pack, unpack, calcsize
 
 IP_HEADERS_FORMAT: str = ">BBHHHBBH4s4s"
 IP_HEADERS_LENGTH: int = calcsize(IP_HEADERS_FORMAT)
@@ -26,3 +26,15 @@ def build_ip_packet(ip_protocol: int, src_ip: str, dst_ip: str, data: bytes) -> 
                           IP_FLAGS_AND_OFFSET, IP_TTL, ip_protocol, IP_HEADER_CHECKSUM,
                           convert_ip_string_to_bytes(src_ip), convert_ip_string_to_bytes(dst_ip))
     return headers + data
+
+
+class IPPacket:
+    def __init__(self, buffer: bytes) -> None:
+        """
+        Initialize IP packet
+        :param buffer: buffer containing raw bytes of the ARP frame
+        """
+        headers: bytes = buffer[:IP_HEADERS_LENGTH]
+        self.version_and_ihl, self.ip_dsf, self.total_length, self.identification, self.flags_and_offset, self.ttl, self.protocol, self.header_checksum, self.src_ip, self.dst_ip = unpack(
+            IP_HEADERS_FORMAT, headers)
+        self.data = buffer[IP_HEADERS_LENGTH:]

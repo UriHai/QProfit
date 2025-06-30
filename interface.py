@@ -1,9 +1,9 @@
 from utils import BROADCAST_MAC_ADDRESS, ARP_ETHER_TYPE, ARP_OPERATION_REQUEST, IPv4_ETHER_TYPE, IP_ICMP_TYPE, \
-    belongs_to_subnet
+    ICMP_PING_TYPE, belongs_to_subnet
 from ethernet import build_ethernet_frame, EthernetFrame
 from arp import build_arp_request_frame, build_arp_reply_frame, ARPFrame
-from ip import build_ip_packet
-from icmp import build_ping_packet
+from ip import build_ip_packet, IPPacket
+from icmp import build_ping_packet, build_pong_packet, ICMPPacket, PingPacket
 
 from typing import Dict, Tuple, Union
 from scapy.all import conf, get_if_hwaddr, get_if_addr
@@ -46,17 +46,14 @@ class Interface:
             recv = self.sock.recv_raw()
             if recv[1]:
                 ethernet_frame = EthernetFrame(recv[1])
-                self.print_frame(ethernet_frame)
-                if self.should_handle(ethernet_frame):
+                if self.should_handle_ethernet(ethernet_frame):
                     if ethernet_frame.ethernet_type == ARP_ETHER_TYPE:
                         self.handle_arp_frame(ethernet_frame)
-
-    def print_frame(self, ethernet_frame: EthernetFrame) -> None:
-        if ethernet_frame.src == LAP or ethernet_frame.dst == LAP:
-            ethernet_frame.print_frame_headers()
+                    if ethernet_frame.ethernet_type == IPv4_ETHER_TYPE:
+                        self.handle_ip_packet(ethernet_frame)
 
     # Link layer
-    def should_handle(self, ethernet_frame: EthernetFrame) -> bool:
+    def should_handle_ethernet(self, ethernet_frame: EthernetFrame) -> bool:
         """
         Determine whether the Ethernet frame is addressed to this interface
         :param ethernet_frame: The Ethernet frame
@@ -138,3 +135,50 @@ class Interface:
         ping_packet: bytes = build_ping_packet(self.sequence_number)
         self.sequence_number += 1
         self.send_ip_packet(IP_ICMP_TYPE, dst_ip, ping_packet)
+
+    def ping(self, dst_ip: str) -> None:
+        """
+        Send ICMP echo request
+        :param dst_ip: The target IP address
+        """
+        ping_packet: bytes = build_ping_packet(self.sequence_number)
+        self.sequence_number += 1
+        self.send_ip_packet(IP_ICMP_TYPE, dst_ip, ping_packet)
+
+    def pong(self, dst_ip: str, icmp_packet: ICMPPacket) -> None:
+        """
+        Send ICMP echo reply
+        :param dst_ip: The target IP address
+        :param icmp_packet: The ICMP packet to respond to
+        """
+        ping_packet: PingPacket = PingPacket(icmp_packet.rest)
+        pong_packet: bytes = build_pong_packet(ping_packet.identifier, ping_packet.sequence_number)
+        self.send_ip_packet(IP_ICMP_TYPE, dst_ip, pong_packet)
+
+    def handle_ip_packet(self, ethernet_frame: EthernetFrame) -> None:
+        """
+        Handle IP packet
+        :param ethernet_frame: The Ethernet frame encapsulating the IP packet
+        """
+        ip_packet: IPPacket = IPPacket(ethernet_frame.data)
+        if not self.should_handle_ip(ip_packet):
+            return
+        if ip_packet.protocol == IP_ICMP_TYPE:
+            self.handle_icmp_packet(ip_packet)
+
+    def should_handle_ip(self, ip_packet: IPPacket) -> bool:
+        """
+        Determine whether the IP packet is addressed to this interface
+        :param ip_packet: The IP packet
+        :return: True if the frames was addressed to this interface, False otherwise
+        """
+        return self.ip == ip_packet.dst_ip and self.ip != ip_packet.src_ip
+
+    def handle_icmp_packet(self, ip_packet) -> None:
+        """
+        Handle ICMP packet
+        :param ip_packet: The IP packet encapsulating the ICMP packet
+        """
+        icmp_packet: ICMPPacket = ip_packet.data
+        if icmp_packet.type == ICMP_PING_TYPE:
+            self.pong(ip_packet.src, icmp_packet)
